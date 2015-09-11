@@ -27,8 +27,14 @@ from PyQt5.QtCore import QSortFilterProxyModel, QModelIndex, Qt
 
 from qutebrowser.utils import log, qtutils, debug
 from qutebrowser.completion.models import base as completion
+<<<<<<< HEAD
 from qutebrowser.config import config
 import re
+=======
+from fuzzywuzzy import fuzz
+from statistics import mean
+
+>>>>>>> 962857b... my hacks
 
 
 class CompletionFilterModel(QSortFilterProxyModel):
@@ -149,6 +155,7 @@ class CompletionFilterModel(QSortFilterProxyModel):
                 if not data:
                     continue
                 else:
+<<<<<<< HEAD
                     match_functions = {
                         'contain': self._match_contain,
                         'fuzzy': self._match_fuzzy,
@@ -157,6 +164,11 @@ class CompletionFilterModel(QSortFilterProxyModel):
                     match_type = config.get('completion', 'match-type')
                     match_function = match_functions[match_type]
                     if match_function(data):
+=======
+                    contain = self.pattern.casefold() in data.casefold()
+                    r = fuzz.ratio(self.pattern.casefold(), data.casefold())
+                    if contain or (r >= len(self.pattern) * 10 and len(self.pattern) <= len(data)):
+>>>>>>> 962857b... my hacks
                         return True
             return False
 

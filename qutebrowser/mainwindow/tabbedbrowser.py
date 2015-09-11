@@ -32,6 +32,9 @@ from qutebrowser.mainwindow import tabwidget
 from qutebrowser.browser import signalfilter, webview
 from qutebrowser.utils import log, usertypes, utils, qtutils, objreg, urlutils
 
+import re
+pt_masks = ['bazqux.com', r'.*\.dist$', r'.*\.dev$']
+
 
 UndoEntry = collections.namedtuple('UndoEntry', ['url', 'history'])
 
@@ -536,6 +539,14 @@ class TabbedBrowser(tabwidget.TabWidget):
         if self._now_focused is not None:
             objreg.register('last-focused-tab', self._now_focused, update=True,
                             scope='window', window=self._win_id)
+        ai = False
+        for r in pt_masks:
+            if re.match(r, tab.url().host()) is not None:
+                ai = True
+                break
+        if ai:
+            modeman.enter(self._win_id, usertypes.KeyMode.passthrough,
+                          'load finished', only_if_normal=True)
         self._now_focused = tab
         self.current_tab_changed.emit(tab)
         QTimer.singleShot(0, self.update_window_title)

@@ -34,6 +34,9 @@ from qutebrowser.keyinput import modeman
 from qutebrowser.utils import message, log, usertypes, utils, qtutils, objreg
 from qutebrowser.browser import webpage, hints, webelem
 
+import re
+pt_masks = ['bazqux.com', r'.*\.dist$', r'.*\.dev$']
+
 
 LoadStatus = usertypes.enum('LoadStatus', ['none', 'success', 'error', 'warn',
                                            'loading'])
@@ -434,6 +437,19 @@ class WebView(QWebView):
 
     def _handle_auto_insert_mode(self, ok):
         """Handle auto-insert-mode after loading finished."""
+        ai = False
+        for mode in (usertypes.KeyMode.hint, usertypes.KeyMode.insert,
+                     usertypes.KeyMode.caret, usertypes.KeyMode.passthrough):
+            modeman.maybe_leave(self.win_id, mode, 'load finished')
+        for r in pt_masks:
+            if re.match(r, self.cur_url.host()) is not None:
+                print(re.match(r, self.cur_url.host()), re.match(r, self.cur_url.host()).groups())
+                ai = True
+                break
+        if ai:
+            modeman.enter(self.win_id, usertypes.KeyMode.passthrough,
+                          'load finished', only_if_normal=True)
+            return
         if not config.get('input', 'auto-insert-mode'):
             return
         mode_manager = objreg.get('mode-manager', scope='window',
@@ -446,9 +462,9 @@ class WebView(QWebView):
             elem = webelem.WebElementWrapper(frame.findFirstElement(':focus'))
         except webelem.IsNullError:
             log.webview.debug("Focused element is null!")
-            return
         log.modes.debug("focus element: {}".format(repr(elem)))
-        if elem.is_editable():
+        print("bazqux" in self.cur_url.host(), self.cur_url.host())
+        if elem.is_editable() or rss:
             modeman.enter(self.win_id, usertypes.KeyMode.insert,
                           'load finished', only_if_normal=True)
 
